@@ -1,0 +1,117 @@
+// text.sa -- plain-language checker. Measures how easy a text is to read
+// gives simple tips for making it clearer.
+
+fn is_vowel(c) {
+    return "aeiouy".contains(c)
+}
+
+// Keep letters, digits and apostrophes; drop punctuation.
+fn clean_word(word) {
+    let keep = "abcdefghijklmnopqrstuvwxyz0123456789'"
+    let out = ""
+    let w = word.lower()
+    for i in range(len(w)) {
+        if keep.contains(w[i]) { out = out + w[i] }
+    }
+    return out
+}
+
+// Estimate syllables by counting groups of vowels. It is an estimate, not perfect.
+fn count_syllables(word) {
+    let w = clean_word(word)
+    if len(w) == 0 { return 0 }
+    let count = 0
+    let previous_was_vowel = false
+    for i in range(len(w)) {
+        let v = is_vowel(w[i])
+        if v and not previous_was_vowel { count = count + 1 }
+        previous_was_vowel = v
+    }
+    // A silent final "e" ("make") does not add a syllable.
+    if w[len(w) - 1] == "e" and count > 1 { count = count - 1 }
+    if count < 1 { count = 1 }
+    return count
+}
+
+// Split text into words (ignoring empty pieces and pure punctuation).
+fn split_words(text) {
+    let words = []
+    let pieces = text.replace("\n", " ").split(" ")
+    for p in pieces {
+        let cleaned = clean_word(p)
+        if len(cleaned) > 0 { words.push(cleaned) }
+    }
+    return words
+}
+
+// Split text into sentences at . ! and ?
+fn split_sentences(text) {
+    let t = text.replace("!", ".").replace("?", ".").replace("\n", " ")
+    let sentences = []
+    for piece in t.split(".") {
+        let s = piece.trim()
+        if len(s) > 0 { sentences.push(s) }
+    }
+    return sentences
+}
+
+// Name for a Flesch Reading Ease score.
+fn reading_level(score) {
+    if score >= 90 { return "Very easy" }
+    if score >= 80 { return "Easy" }
+    if score >= 70 { return "Fairly easy" }
+    if score >= 60 { return "Plain English" }
+    if score >= 50 { return "Fairly difficult" }
+    if score >= 30 { return "Difficult" }
+    return "Very difficult"
+}
+
+// Analyse a text. Returns a dictionary of measurements.
+fn analyze_text(text) {
+    let words = split_words(text)
+    let sentences = split_sentences(text)
+    let word_count = len(words)
+    let sentence_count = len(sentences)
+    if word_count == 0 or sentence_count == 0 {
+        return {"words": 0, "sentences": 0, "syllables": 0, "long_words": 0,
+                "avg_sentence_length": 0, "reading_ease": 0, "level": "No text"}
+    }
+    let syllables = 0
+    let long_words = 0
+    for w in words {
+        let s = count_syllables(w)
+        syllables = syllables + s
+        if s >= 4 { long_words = long_words + 1 }
+    }
+    let avg_len = word_count / sentence_count
+    let score = 206.835 - 1.015 * avg_len - 84.6 * (syllables / word_count)
+    score = round(score)
+    return {
+        "words": word_count,
+        "sentences": sentence_count,
+        "syllables": syllables,
+        "long_words": long_words,
+        "avg_sentence_length": round(avg_len),
+        "reading_ease": score,
+        "level": reading_level(score)
+    }
+}
+
+// Simple, friendly tips based on an analysis.
+fn writing_tips(analysis) {
+    let tips = []
+    if analysis["words"] == 0 {
+        tips.push("Type or paste some text to check.")
+        return tips
+    }
+    if analysis["avg_sentence_length"] > 20 {
+        tips.push("Your sentences are long. Try splitting them so each has one idea.")
+    }
+    if analysis["long_words"] * 10 > analysis["words"] {
+        tips.push("Several words are long. Try shorter, everyday words.")
+    }
+    if len(tips) == 0 {
+        tips.push("This text looks clear. Nice work.")
+    }
+    return tips
+}

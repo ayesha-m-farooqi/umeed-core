@@ -1,0 +1,49 @@
+# @use ../index.sa
+
+fn check(name, condition) {
+    if condition {
+        print("PASS: " + name)
+    } else {
+        print("FAIL: " + name)
+    }
+}
+
+fn silent_seconds(n) {
+    let out = []
+    for i in range(n) { out.push(false) }
+    return out
+}
+
+// --- alerts ---
+let a = create_alert("Sara", "sound")
+check("new alert is pending", a["status"] == "pending")
+check("new alert has 10 seconds", a["seconds_left"] == 10)
+check("bad kind gives nil", create_alert("Sara", "scream") == nil)
+check("empty name gives nil", create_alert("   ", "manual") == nil)
+check("tick lowers the countdown", tick(a)["seconds_left"] == 9)
+check("OK cancels the alert", respond_ok(a)["status"] == "cancelled")
+check("confirm_now confirms", confirm_now(a)["status"] == "confirmed")
+check("no answer for 10 seconds confirms", simulate_countdown(a, silent_seconds(10))["status"] == "confirmed")
+check("9 silent seconds is still pending", simulate_countdown(a, silent_seconds(9))["status"] == "pending")
+check("answering at second 3 cancels", simulate_countdown(a, [false, false, true])["status"] == "cancelled")
+let done = confirm_now(a)
+check("a final alert does not change", tick(done)["status"] == "confirmed" and respond_ok(done)["status"] == "confirmed")
+
+// --- contacts ---
+let ammi = create_contact("Ammi", "+92 300 1234567", "mother", 1)
+let bhai = create_contact("Bhai", "+92 301 7654321", "brother", 2)
+let khala = create_contact("Khala", "0300-1112223", "aunt", 2)
+check("valid contact is created", ammi != nil)
+check("letters in a phone are rejected", create_contact("X", "abc1234567", "", 1) == nil)
+check("short phone is rejected", create_contact("X", "123", "", 1) == nil)
+check("priority 0 is rejected", create_contact("X", "0300 1234567", "", 0) == nil)
+check("phone is cleaned", ammi["phone"] == "+923001234567")
+check("call link", call_link(ammi) == "tel:+923001234567")
+check("sorted by priority", join_names(contact_names([bhai, ammi])) == "Ammi, Bhai")
+check("equal priorities keep order", join_names(contact_names([bhai, khala, ammi])) == "Ammi, Bhai, Khala")
+check("first contact", first_contact([bhai, ammi])["name"] == "Ammi")
+check("no contacts gives nil", first_contact([]) == nil)
+check("nil entries are skipped", join_names(contact_names([nil, ammi])) == "Ammi")
+let plan = notify_plan([bhai, ammi], "Demo General Hospital")
+check("plan lists contacts in order", join_names(plan["contacts"]) == "Ammi, Bhai")
+check("plan has the hospital", plan["hospital"] == "Demo General Hospital")

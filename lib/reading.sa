@@ -1,0 +1,53 @@
+// reading.sa -- reading aids: reformat text so it is easier to follow.
+
+// Wrap text into lines of at most `width` characters.
+fn wrap_text(text, width) {
+    let lines = []
+    let current = ""
+    for word in text.replace("\n", " ").split(" ") {
+        if len(word) == 0 { continue }
+        if len(current) == 0 {
+            current = word
+        } else if len(current) + 1 + len(word) <= width {
+            current = current + " " + word
+        } else {
+            lines.push(current)
+            current = word
+        }
+    }
+    if len(current) > 0 { lines.push(current) }
+    return lines
+}
+
+// Put each sentence on its own line, which many readers find easier.
+fn one_sentence_per_line(text) {
+    let t = text.replace("!", "!|").replace("?", "?|").replace(".", ".|").replace("\n", " ")
+    let lines = []
+    for piece in t.split("|") {
+        let s = piece.trim()
+        if len(s) > 0 { lines.push(s) }
+    }
+    return lines
+}
+
+// Add spaces between letters ("hello" -> "h e l l o") to help with tracking.
+fn spaced_letters(text) {
+    let out = ""
+    for i in range(len(text)) {
+        out = out + text[i]
+        if i < len(text) - 1 { out = out + " " }
+    }
+    return out
+}
+
+// Show a phrase large in a frame, so it is easy to read on a screen.
+fn framed(text, width) {
+    let border = "=".repeat(width)
+    let out = [border, ""]
+    for line in wrap_text(text.upper(), width - 4) {
+        out.push("  " + line)
+    }
+    out.push("")
+    out.push(border)
+    return out
+}

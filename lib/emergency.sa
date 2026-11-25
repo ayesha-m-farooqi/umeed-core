@@ -1,0 +1,89 @@
+// emergency.sa -- the emergency alert flow as plain logic.
+// An alert starts "pending" with a countdown. If the person answers "I am OK" it
+// becomes "cancelled". If the countdown reaches zero with no answer it becomes
+// "confirmed", and trusted contacts should be told.
+// Alerts are never changed in place: every function returns a new alert.
+
+fn countdown_seconds() {
+    return 10
+}
+
+// kind is "sound" (a loud or unusual sound was heard) or "manual" (SOS pressed).
+// Returns nil for a bad kind or an empty name.
+fn create_alert(name, kind) {
+    if kind != "sound" and kind != "manual" { return nil }
+    let who = name.trim()
+    if len(who) == 0 { return nil }
+    return {
+        "name": who,
+        "kind": kind,
+        "status": "pending",
+        "seconds_left": countdown_seconds()
+    }
+}
+
+fn with_status(alert, status, seconds) {
+    return {
+        "name": alert["name"],
+        "kind": alert["kind"],
+        "status": status,
+        "seconds_left": seconds
+    }
+}
+
+fn is_final(alert) {
+    return alert["status"] != "pending"
+}
+
+// The person says or presses "I am OK". Only a pending alert can be cancelled.
+fn respond_ok(alert) {
+    if is_final(alert) { return alert }
+    return with_status(alert, "cancelled", alert["seconds_left"])
+}
+
+// One second passes. When the countdown reaches zero the alert is confirmed.
+fn tick(alert) {
+    if is_final(alert) { return alert }
+    let left = alert["seconds_left"] - 1
+    if left <= 0 { return with_status(alert, "confirmed", 0) }
+    return with_status(alert, "pending", left)
+}
+
+// Skip the countdown (for example a second press of the SOS button).
+fn confirm_now(alert) {
+    if is_final(alert) { return alert }
+    return with_status(alert, "confirmed", 0)
+}
+
+// Play out a countdown from a list of true/false answers, one per second.
+// true means "the person answered OK that second".
+fn simulate_countdown(alert, responses) {
+    let current = alert
+    for answered in responses {
+        if not is_final(current) {
+            if answered {
+                current = respond_ok(current)
+            } else {
+                current = tick(current)
+            }
+        }
+    }
+    return current
+}
+
+fn alert_reason(alert) {
+    if alert["kind"] == "sound" { return "A loud or unusual sound was heard." }
+    return "SOS was pressed."
+}
+
+// A short sentence that can be shown on screen or read aloud.
+fn alert_message(alert) {
+    let status = alert["status"]
+    if status == "pending" {
+        let unit = " seconds"
+        if alert["seconds_left"] == 1 { unit = " second" }
+        return "Are you okay? Say or press OK. Help is called in " + str(alert["seconds_left"]) + unit + "."
+    }
+    if status == "cancelled" { return "Glad you are okay. The alert is cancelled." }
+    return "Calling for help now. Your trusted contacts are being told."
+}

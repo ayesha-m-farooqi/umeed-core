@@ -1,0 +1,100 @@
+// contacts.sa -- trusted contacts: who to tell first when an alert is confirmed.
+
+// Keep only digits and a leading plus: "+92 300-1234567" -> "+923001234567".
+fn clean_phone(phone) {
+    let keep = "+0123456789"
+    let out = ""
+    for i in range(len(phone)) {
+        if keep.contains(phone[i]) { out = out + phone[i] }
+    }
+    return out
+}
+
+// 7 to 15 digits, only digits, spaces, dashes and brackets, plus sign only first.
+fn is_valid_phone(phone) {
+    let allowed = " -()+0123456789"
+    for i in range(len(phone)) {
+        if not allowed.contains(phone[i]) { return false }
+    }
+    let p = clean_phone(phone)
+    let digits = 0
+    for i in range(len(p)) {
+        if p[i] != "+" { digits = digits + 1 }
+        if p[i] == "+" and i > 0 { return false }
+    }
+    if digits < 7 or digits > 15 { return false }
+    return true
+}
+
+// priority 1 is called first. Returns nil if anything is invalid.
+fn create_contact(name, phone, relation, priority) {
+    let n = name.trim()
+    if len(n) == 0 { return nil }
+    if not is_valid_phone(phone) { return nil }
+    if priority < 1 or priority != round(priority) { return nil }
+    return {
+        "name": n,
+        "phone": clean_phone(phone),
+        "relation": relation.trim(),
+        "priority": priority
+    }
+}
+
+// Lowest priority number first. Contacts with equal priority keep their order.
+// nil entries (from a failed create_contact) are skipped.
+fn sort_contacts(contacts) {
+    let ordered = []
+    for c in contacts {
+        if c == nil { continue }
+        let result = []
+        let placed = false
+        for s in ordered {
+            if not placed and c["priority"] < s["priority"] {
+                result.push(c)
+                placed = true
+            }
+            result.push(s)
+        }
+        if not placed { result.push(c) }
+        ordered = result
+    }
+    return ordered
+}
+
+// The contact to call first, or nil if there are none.
+fn first_contact(contacts) {
+    let ordered = sort_contacts(contacts)
+    if len(ordered) == 0 { return nil }
+    return ordered[0]
+}
+
+fn contact_names(contacts) {
+    let names = []
+    for c in sort_contacts(contacts) {
+        names.push(c["name"])
+    }
+    return names
+}
+
+fn join_names(names) {
+    let out = ""
+    for i in range(len(names)) {
+        if i > 0 { out = out + ", " }
+        out = out + names[i]
+    }
+    return out
+}
+
+// A link a phone can dial: "tel:+923001234567".
+fn call_link(contact) {
+    return "tel:" + clean_phone(contact["phone"])
+}
+
+// Who to tell when an alert is confirmed (same shape as the Umeed API's "notified").
+// hospital can be a name, or nil if the person has not registered one.
+fn notify_plan(contacts, hospital) {
+    return {
+        "contacts": contact_names(contacts),
+        "hospital": hospital
+    }
+}

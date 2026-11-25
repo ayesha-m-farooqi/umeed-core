@@ -1,0 +1,52 @@
+// tests/test.sa -- run with:  qrun tests/test.sa
+# @use ../index.sa
+
+let failed = []
+fn check(name, condition) {
+    if condition {
+        print("PASS " + name)
+    } else {
+        print("FAIL " + name)
+        failed.push(name)
+    }
+}
+
+// profile
+check("yes parses", parse_yes_no(" Y ") == true)
+check("no parses", parse_yes_no("No") == false)
+check("junk is nil", parse_yes_no("maybe") == nil)
+let p = create_profile("Ayesha", true, false, false, true)
+let recs = recommend_features(p)
+check("visual+mobility gives 4 recs", len(recs) == 4)
+check("first rec", recs[0] == "Image descriptions")
+check("default recs", recommend_features(create_profile("A", false, false, false, false))[0] == "Standard Umeed experience")
+check("yes_no_text", yes_no_text(true) == "Yes" and yes_no_text(false) == "No")
+
+// text
+check("syllables cat", count_syllables("cat") == 1)
+check("syllables make", count_syllables("make") == 1)
+check("syllables banana", count_syllables("banana") == 3)
+check("split sentences", len(split_sentences("Hi there. How are you? Fine!")) == 3)
+check("split words", len(split_words("Hello, world!  ok")) == 3)
+let easy = analyze_text("The cat sat. The dog ran. We had fun.")
+check("easy text is easy", easy["reading_ease"] >= 90)
+let hard = analyze_text("Notwithstanding considerable organizational complexity, institutional transformation necessitates comprehensive collaborative deliberation.")
+check("hard text is harder", hard["reading_ease"] < easy["reading_ease"])
+check("empty text", analyze_text("   ")["level"] == "No text")
+check("tips exist", len(writing_tips(hard)) >= 1)
+
+// reading
+let lines = wrap_text("one two three four five six", 9)
+check("wrap lines", len(lines) == 4 and lines[0] == "one two" and lines[2] == "four five")
+check("sentence lines", len(one_sentence_per_line("A b. C d! E f?")) == 3)
+check("spaced letters", spaced_letters("abc") == "a b c")
+check("frame has border", framed("hi", 20)[0] == "=".repeat(20))
+
+// phrases
+check("phrase 1", get_phrase(1) == "Hello, my name is ...")
+check("phrase out of range", get_phrase(99) == nil)
+if len(failed) == 0 {
+    print("ALL TESTS PASSED")
+} else {
+    print("TESTS FAILED: " + str(len(failed)))
+}

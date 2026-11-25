@@ -1,0 +1,162 @@
+// umeed.sa -- Project Umeed: an interactive accessibility toolkit.
+// Run it with:  qrun umeed.sa
+# @use ./index.sa
+
+// Ask a yes/no question until the user answers properly.
+fn ask_yes_no(question) {
+    while true {
+        let answer = parse_yes_no(input(question))
+        if answer != nil { return answer }
+        print("Please enter yes or no.")
+    }
+}
+
+fn ask_name() {
+    while true {
+        let name = input("Please enter your name: ").trim()
+        if len(name) > 0 { return name }
+        print("Name cannot be empty.")
+    }
+}
+
+fn show_profile(profile) {
+    print("")
+    print("========== UMEED PROFILE ==========")
+    print("Name: " + profile["name"])
+    print("Visual accessibility:   " + yes_no_text(profile["visual"]))
+    print("Hearing accessibility:  " + yes_no_text(profile["hearing"]))
+    print("Speech accessibility:   " + yes_no_text(profile["speech"]))
+    print("Mobility accessibility: " + yes_no_text(profile["mobility"]))
+    print("")
+    print("======= YOUR RECOMMENDATIONS =======")
+    for rec in recommend_features(profile) {
+        print("- " + rec)
+    }
+}
+
+fn setup_profile() {
+    print("")
+    print("Let's understand your accessibility needs.")
+    print("Your answers help us personalize Umeed.")
+    let name = ask_name()
+    let visual = ask_yes_no("Do you have visual accessibility needs? (yes/no): ")
+    let hearing = ask_yes_no("Do you have hearing accessibility needs? (yes/no): ")
+    let speech = ask_yes_no("Do you have speech accessibility needs? (yes/no): ")
+    let mobility = ask_yes_no("Do you have mobility accessibility needs? (yes/no): ")
+    let profile = create_profile(name, visual, hearing, speech, mobility)
+    print("")
+    print("Your profile has been created successfully!")
+    show_profile(profile)
+    return profile
+}
+
+fn check_text() {
+    print("")
+    let text = input("Paste a short text to check: ")
+    let a = analyze_text(text)
+    print("")
+    print("Words: " + str(a["words"]) + "   Sentences: " + str(a["sentences"]))
+    print("Average sentence length: " + str(a["avg_sentence_length"]) + " words")
+    print("Reading ease: " + str(a["reading_ease"]) + " (" + a["level"] + ")")
+    for tip in writing_tips(a) {
+        print("Tip: " + tip)
+    }
+}
+
+fn reading_aid() {
+    print("")
+    let text = input("Paste a text to reformat: ")
+    print("")
+    print("--- One sentence per line ---")
+    for line in one_sentence_per_line(text) {
+        print(line)
+    }
+}
+
+fn phrase_screen() {
+    print("")
+    let board = phrase_board()
+    for i in range(len(board)) {
+        print(str(i + 1) + ". " + board[i])
+    }
+    let choice = parseInt(input("Choose a number: ").trim())
+    if isNaN(choice) {
+        print("Please type a number.")
+        return nil
+    }
+    let phrase = get_phrase(choice)
+    if phrase == nil {
+        print("That number is not on the board.")
+        return nil
+    }
+    print("")
+    for line in framed(phrase, 50) {
+        print(line)
+    }
+}
+
+fn emergency_drill() {
+    print("")
+    print("This is a practice drill. No real call is made.")
+    let name = ask_name()
+    let contacts = [
+        create_contact("Bhai", "+92 301 7654321", "brother", 2),
+        create_contact("Ammi", "+92 300 1234567", "mother", 1)
+    ]
+    let current = create_alert(name, "sound")
+    print("")
+    print(alert_reason(current))
+    let answer = input("Type ok to answer, or press Enter to stay silent: ").trim().lower()
+    let responses = silent_drill_seconds()
+    if answer == "ok" { responses = [false, false, true] }
+    for answered in responses {
+        if not is_final(current) {
+            print(alert_message(current))
+            if answered {
+                current = respond_ok(current)
+            } else {
+                current = tick(current)
+            }
+        }
+    }
+    print("")
+    print(alert_message(current))
+    if current["status"] == "confirmed" {
+        let plan = notify_plan(contacts, "Demo General Hospital")
+        print("Would tell: " + join_names(plan["contacts"]))
+        print("Hospital: " + plan["hospital"])
+    }
+}
+
+fn silent_drill_seconds() {
+    let out = []
+    for i in range(countdown_seconds()) { out.push(false) }
+    return out
+}
+
+fn main() {
+    print("====================================")
+    print("       WELCOME TO PROJECT UMEED")
+    print("====================================")
+    let running = true
+    while running {
+        print("")
+        print("1. Create my accessibility profile")
+        print("2. Check how easy a text is to read")
+        print("3. Reading aid (one sentence per line)")
+        print("4. Phrase board")
+        print("5. Emergency drill")
+        print("6. Quit")
+        let choice = input("Choose an option (1-6): ").trim()
+        if choice == "1" { setup_profile() }
+        else if choice == "2" { check_text() }
+        else if choice == "3" { reading_aid() }
+        else if choice == "4" { phrase_screen() }
+        else if choice == "5" { emergency_drill() }
+        else if choice == "6" { running = false }
+        else { print("Please choose a number from 1 to 6.") }
+    }
+    print("Goodbye!")
+}
+
+main()

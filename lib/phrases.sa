@@ -1,0 +1,22 @@
+// phrases.sa -- a phrase board for people who find speaking hard.
+// Pick a phrase and show it on the screen instead of saying it.
+
+fn phrase_board() {
+    return [
+        "Hello, my name is ...",
+        "Please speak slowly.",
+        "I need help.",
+        "Can you write that down?",
+        "Thank you.",
+        "I do not understand. Please explain again.",
+        "Please call my trusted contact.",
+        "I need a quiet place."
+    ]
+}
+
+// Get phrase number `n` (1-based). Returns nil if out of range.
+fn get_phrase(n) {
+    let board = phrase_board()
+    if n < 1 or n > len(board) { return nil }
+    return board[n - 1]
+}

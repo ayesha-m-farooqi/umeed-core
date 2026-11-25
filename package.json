@@ -1,0 +1,13 @@
+{
+  "name": "umeed-core",
+  "version": "1.0.0",
+  "description": "Umeed: an accessibility toolkit in Quantum. Accessibility profiles, a plain-language text checker, reading aids and a phrase board.",
+  "main": "index.sa",
+  "license": "MIT",
+  "keywords": ["accessibility", "a11y", "plain-language", "readability", "assistive", "umeed"],
+  "scripts": {
+    "start": "qrun umeed.sa",
+    "test": "qrun tests/test.sa"
+  },
+  "files": ["index.sa", "umeed.sa", "lib", "README.md", "LICENSE"]
+}

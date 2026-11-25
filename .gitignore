@@ -1,0 +1,5 @@
+quantum_qubits/
+node_modules/
+*.exe
+*.tgz
+.env

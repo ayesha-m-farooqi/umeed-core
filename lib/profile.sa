@@ -1,0 +1,53 @@
+// profile.sa -- accessibility profile: who needs what, and what Umeed recommends.
+// Ported from the first console prototype of Project Umeed.
+
+// Build a profile as a dictionary.
+fn create_profile(name, visual, hearing, speech, mobility) {
+    return {
+        "name": name,
+        "visual": visual,
+        "hearing": hearing,
+        "speech": speech,
+        "mobility": mobility
+    }
+}
+
+// Turn a yes/no answer into true/false. Anything else returns nil.
+fn parse_yes_no(answer) {
+    let a = answer.trim().lower()
+    if a == "yes" or a == "y" { return true }
+    if a == "no" or a == "n" { return false }
+    return nil
+}
+
+// Return a list of recommended features for a profile.
+fn recommend_features(profile) {
+    let recs = []
+    if profile["visual"] {
+        recs.push("Image descriptions")
+        recs.push("Screen reader support")
+    }
+    if profile["hearing"] {
+        recs.push("Video captions")
+        recs.push("Visual notifications")
+    }
+    if profile["speech"] {
+        recs.push("Text-to-speech")
+        recs.push("Text-based communication")
+    }
+    if profile["mobility"] {
+        recs.push("Keyboard navigation")
+        recs.push("Simplified controls")
+    }
+    if len(recs) == 0 {
+        recs.push("Standard Umeed experience")
+        recs.push("You can update your preferences anytime")
+    }
+    return recs
+}
+
+// "Yes" or "No" text for a true/false value.
+fn yes_no_text(value) {
+    if value { return "Yes" }
+    return "No"
+}

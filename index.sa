@@ -1,0 +1,7 @@
+// index.sa -- package entry point. Importing this gives you every Umeed function.
+# @use ./lib/profile.sa
+# @use ./lib/text.sa
+# @use ./lib/reading.sa
+# @use ./lib/phrases.sa
+# @use ./lib/emergency.sa
+# @use ./lib/contacts.sa
